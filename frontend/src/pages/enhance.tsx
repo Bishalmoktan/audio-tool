@@ -1,0 +1,182 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { AudioLines, Music } from "lucide-react";
+import { motion } from "framer-motion";
+import { WEQ8Runtime } from "weq8";
+import { toast } from "sonner";
+import "weq8/ui";
+
+import { useAudioContext } from "@/context/audio-context";
+import MusicPlayer from "@/components/music-player";
+import { BackgroundBeams } from "@/components/ui/background-beams";
+
+const animationVariants = {
+  hidden: { opacity: 0, y: 100 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const EnhancePage = () => {
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const weq8Ref = useRef<WEQ8Runtime | null>(null);
+  const audioSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const weq8UIRef = useRef<HTMLElement | null>(null); // Use ref for `weq8-ui`
+
+  const navigate = useNavigate();
+  const { audioUrl, isPlaying } = useAudioContext();
+
+  useEffect(() => {
+    if (!audioUrl) {
+      toast.warning("Please upload an audio file first");
+      navigate("/");
+    }
+
+    const initializeAudio = async () => {
+      if (!audioElementRef.current) {
+        audioElementRef.current = new Audio(audioUrl);
+        audioElementRef.current.loop = true;
+      }
+
+      if (isPlaying) {
+        await audioElementRef.current.play();
+      } else {
+        audioElementRef.current.pause();
+      }
+    };
+    initializeAudio();
+  }, [audioUrl, navigate]);
+
+  useEffect(() => {
+    const manageAudioPlayback = async () => {
+      if (!audioElementRef.current || !audioContextRef.current) return;
+
+      if (isPlaying) {
+        await audioContextRef.current.resume();
+        await audioElementRef.current.play();
+      } else {
+        await audioElementRef.current.pause();
+        await audioContextRef.current.suspend();
+      }
+    };
+
+    manageAudioPlayback();
+  }, [isPlaying]);
+
+  useEffect(() => {
+    const initializeAudio = async () => {
+      try {
+        if (!window.AudioContext) {
+          console.error("Web Audio API is not supported in this browser.");
+          return;
+        }
+
+        if (!audioContextRef.current) {
+          audioContextRef.current = new AudioContext();
+        }
+
+        if (!weq8Ref.current) {
+          weq8Ref.current = new WEQ8Runtime(audioContextRef.current);
+        }
+
+        if (!audioElementRef.current) {
+          audioElementRef.current = new Audio();
+          audioElementRef.current.src = audioUrl;
+        }
+
+        if (!audioSourceRef.current) {
+          audioSourceRef.current =
+            audioContextRef.current.createMediaElementSource(
+              audioElementRef.current
+            );
+        }
+
+        if (audioSourceRef.current && weq8Ref.current) {
+          audioSourceRef.current.connect(weq8Ref.current.input);
+          weq8Ref.current.connect(audioContextRef.current.destination);
+        }
+
+        console.log("AudioContext initialized:", audioContextRef.current);
+
+        if (weq8UIRef.current) {
+          // @ts-ignore
+          weq8UIRef.current.runtime = weq8Ref.current;
+        }
+
+        const handleUserInteraction = () => {
+          audioContextRef.current?.resume();
+          audioElementRef.current
+            ?.play()
+            .catch((err) => console.error("Error playing audio:", err));
+          document.removeEventListener("click", handleUserInteraction);
+        };
+        document.addEventListener("click", handleUserInteraction);
+      } catch (error) {
+        console.error("Error initializing audio:", error);
+      }
+    };
+
+    initializeAudio();
+  }, [audioUrl]);
+
+  return (
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      transition={{ duration: 0.5, delay: 0.5, ease: "easeOut" }}
+      variants={animationVariants}
+      className="h-[80vh] bg-[#131B25] overflow-hidden rounded-lg text-white relative antialiased flex flex-col items-center justify-evenly"
+    >
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        transition={{ duration: 0.5, delay: 1, ease: "easeOut" }}
+        variants={animationVariants}
+        className="flex flex-col items-center gap-2"
+      >
+        <AudioLines className="size-20" />
+        <h2 className="text-2xl">EQ Settings</h2>
+        <p className="text-sm text-muted-foreground max-w-[400px] text-center">
+          Adjust frequencies to shape audio. Enhance clarity, balance tones,
+          achieve perfect sound.
+        </p>
+        <div className="flex gap-2">
+          <div className="flex gap-2 bg-black/50 rounded-full p-2 items-center">
+            <span className="text-black bg-white rounded-full px-2 py-1">
+              Enable EQ
+            </span>
+            <span className="text-muted-foreground">Disable EQ</span>
+          </div>
+          <span className="flex justify-center items-center bg-black/50 rounded-full p-2">
+            <Music className="size-7" />
+          </span>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        transition={{ duration: 0.5, delay: 1.2, ease: "easeOut" }}
+        variants={animationVariants}
+        className="w-[90%] z-[999999]"
+      >
+        {/* @ts-ignore */}
+        <weq8-ui ref={weq8UIRef} style={{ backgroundColor: "transparent" }} />
+      </motion.div>
+
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        transition={{ duration: 0.5, delay: 1.4, ease: "easeOut" }}
+        variants={animationVariants}
+        className="w-full z-[999999]"
+      >
+        <MusicPlayer />
+      </motion.div>
+
+      <BackgroundBeams />
+    </motion.div>
+  );
+};
+
+export default EnhancePage;
