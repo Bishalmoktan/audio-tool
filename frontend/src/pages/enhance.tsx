@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AudioLines, Music } from "lucide-react";
 import { motion } from "framer-motion";
 import { WEQ8Runtime } from "weq8";
@@ -21,20 +21,20 @@ const EnhancePage = () => {
   const weq8Ref = useRef<WEQ8Runtime | null>(null);
   const audioSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
-  const weq8UIRef = useRef<HTMLElement | null>(null); // Use ref for `weq8-ui`
+  const weq8UIRef = useRef<HTMLElement | null>(null);
 
   const navigate = useNavigate();
-  const { audioUrl, isPlaying } = useAudioContext();
+  const { currentAudioUrl, isPlaying } = useAudioContext();
 
   useEffect(() => {
-    if (!audioUrl) {
+    if (!currentAudioUrl) {
       toast.warning("Please upload an audio file first");
       navigate("/");
     }
 
     const initializeAudio = async () => {
       if (!audioElementRef.current) {
-        audioElementRef.current = new Audio(audioUrl);
+        audioElementRef.current = new Audio(currentAudioUrl);
         audioElementRef.current.loop = true;
       }
 
@@ -45,7 +45,7 @@ const EnhancePage = () => {
       }
     };
     initializeAudio();
-  }, [audioUrl, navigate]);
+  }, [currentAudioUrl, navigate]);
 
   useEffect(() => {
     const manageAudioPlayback = async () => {
@@ -81,7 +81,7 @@ const EnhancePage = () => {
 
         if (!audioElementRef.current) {
           audioElementRef.current = new Audio();
-          audioElementRef.current.src = audioUrl;
+          audioElementRef.current.src = currentAudioUrl;
         }
 
         if (!audioSourceRef.current) {
@@ -117,7 +117,7 @@ const EnhancePage = () => {
     };
 
     initializeAudio();
-  }, [audioUrl]);
+  }, [currentAudioUrl]);
 
   return (
     <motion.div
@@ -147,9 +147,12 @@ const EnhancePage = () => {
             </span>
             <span className="text-muted-foreground">Disable EQ</span>
           </div>
-          <span className="flex justify-center items-center bg-black/50 rounded-full p-2">
+          <Link
+            to={"/audio"}
+            className="flex justify-center items-center bg-black/50 rounded-full p-2"
+          >
             <Music className="size-7" />
-          </span>
+          </Link>
         </div>
       </motion.div>
 

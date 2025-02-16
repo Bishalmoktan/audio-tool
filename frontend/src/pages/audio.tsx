@@ -19,16 +19,19 @@ const animationVariants = {
 
 const AudioPage = () => {
   const navigate = useNavigate();
-  const { audioUrl } = useAudioContext();
+  const { currentAudioUrl, isOriginalAudio, setIsOriginalAudio } =
+    useAudioContext();
+
+  console.log(currentAudioUrl);
 
   useEffect(() => {
-    if (!audioUrl) {
+    if (!currentAudioUrl) {
       toast.warning("Please upload an audio file first", {
         duration: 5000,
       });
       navigate("/");
     }
-  }, [audioUrl, navigate]);
+  }, [currentAudioUrl, navigate]);
   return (
     <motion.div
       initial="hidden"
@@ -70,11 +73,27 @@ const AudioPage = () => {
           playback across a variety of devices.
         </p>
         <div className="flex gap-2">
-          <div className="flex gap-2 bg-black/50 rounded-full p-2 items-center">
-            <span className="text-black bg-white rounded-full px-2 py-1">
+          <div className="flex gap-2 bg-black/50 rounded-full p-2 items-center z-10 cursor-pointer">
+            <span
+              onClick={() => setIsOriginalAudio(true)}
+              className={`rounded-full px-2 py-1 ${
+                isOriginalAudio
+                  ? "bg-white text-black"
+                  : "bg-black text-muted-foreground"
+              }`}
+            >
               Original
             </span>
-            <span className="text-muted-foreground">Mastered</span>
+            <span
+              onClick={() => setIsOriginalAudio(false)}
+              className={`rounded-full px-2 py-1 ${
+                !isOriginalAudio
+                  ? "bg-white text-black"
+                  : "bg-black text-muted-foreground"
+              }`}
+            >
+              Mastered
+            </span>
           </div>
           <Link
             to="/enhance"

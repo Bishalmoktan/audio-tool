@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropzone";
 import Header from "./header";
 import { useAudioContext } from "@/context/audio-context";
+import { processSong } from "@/utils/process-song";
+import { env } from "@/config/env";
 
 const animationVariants = {
   hidden: { opacity: 0, y: 100 },
@@ -19,12 +21,23 @@ const animationVariants = {
 
 const UploadTrack = () => {
   const navigate = useNavigate();
-  const { setAudioUrl } = useAudioContext();
+  const { setOriginalAudioUrl, setProcessedAudioUrl } = useAudioContext();
   const dropzone = useDropzone({
     onDropFile: async (file: File) => {
-      toast.success("File uploaded successfully");
-      navigate("/audio");
-      setAudioUrl(URL.createObjectURL(file));
+      setOriginalAudioUrl(URL.createObjectURL(file));
+
+      toast.promise(processSong(file), {
+        loading: "Uploading...",
+        success: (response) => {
+          navigate("/audio");
+          setProcessedAudioUrl(
+            `${env.pythonServerUrl}${response.data.processed_file}`
+          );
+
+          return "Song processed successfully!";
+        },
+        error: "Failed to process song!",
+      });
       return {
         status: "success",
         result: URL.createObjectURL(file),

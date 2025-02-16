@@ -1,9 +1,15 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 interface AudioContextType {
-  audioUrl: string;
-  setAudioUrl: (url: string) => void;
+  originalAudioUrl: string;
+  setOriginalAudioUrl: (url: string) => void;
+  processedAudioUrl: string;
+  setProcessedAudioUrl: (url: string) => void;
+  currentAudioUrl: string;
+  setCurrentAudioUrl: (url: string) => void;
   isPlaying: boolean;
   togglePlayPause: () => void;
+  isOriginalAudio: boolean;
+  setIsOriginalAudio: (isOriginal: boolean) => void;
 }
 
 const AudioContext = createContext<AudioContextType | null>(null);
@@ -13,8 +19,21 @@ export const AudioContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [audioUrl, setAudioUrl] = useState<string>("");
+  const [originalAudioUrl, setOriginalAudioUrl] = useState<string>("");
+  const [processedAudioUrl, setProcessedAudioUrl] = useState<string>("");
+  const [currentAudioUrl, setCurrentAudioUrl] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isOriginalAudio, setIsOriginalAudio] = useState<boolean>(true);
+
+  console.log(originalAudioUrl);
+
+  useEffect(() => {
+    if (isOriginalAudio) {
+      setCurrentAudioUrl(originalAudioUrl);
+    } else {
+      setCurrentAudioUrl(processedAudioUrl);
+    }
+  }, [isOriginalAudio, originalAudioUrl, processedAudioUrl]);
 
   const togglePlayPause = () => {
     setIsPlaying((prev) => !prev);
@@ -22,7 +41,18 @@ export const AudioContextProvider = ({
 
   return (
     <AudioContext.Provider
-      value={{ audioUrl, setAudioUrl, isPlaying, togglePlayPause }}
+      value={{
+        originalAudioUrl,
+        setOriginalAudioUrl,
+        processedAudioUrl,
+        setProcessedAudioUrl,
+        currentAudioUrl,
+        setCurrentAudioUrl,
+        isPlaying,
+        togglePlayPause,
+        isOriginalAudio,
+        setIsOriginalAudio,
+      }}
     >
       {children}
     </AudioContext.Provider>

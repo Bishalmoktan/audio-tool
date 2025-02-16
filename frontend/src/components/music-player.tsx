@@ -9,11 +9,11 @@ export default function MusicPlayer() {
   const [currentTime, setCurrentTime] = useState("0:00");
   const [duration, setDuration] = useState("0:00");
 
-  const { audioUrl, togglePlayPause, isPlaying } = useAudioContext();
+  const { currentAudioUrl, togglePlayPause, isPlaying } = useAudioContext();
 
   const { wavesurfer } = useWavesurfer({
     container: wavesurferRef,
-    url: audioUrl,
+    url: currentAudioUrl,
     waveColor: "#E5E7EB",
     progressColor: "#3EBCB5",
     height: 100,
