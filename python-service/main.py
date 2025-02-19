@@ -36,7 +36,7 @@ async def process_audio(request: Request):
     data = await request.json()
     mg.process(
     target=data["songUrl"],
-    reference="reference.mp3",
+    reference="reference.wav",
     results=[
         mg.pcm16(f"{PROCESSED_DIR}/my_song_master_16bit.wav"),
         mg.pcm24(f"{PROCESSED_DIR}/my_song_master_24bit.wav"),

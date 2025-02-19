@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
+import { toast } from "sonner";
 interface AudioContextType {
   originalAudioUrl: string;
   setOriginalAudioUrl: (url: string) => void;
@@ -10,6 +11,9 @@ interface AudioContextType {
   togglePlayPause: () => void;
   isOriginalAudio: boolean;
   setIsOriginalAudio: (isOriginal: boolean) => void;
+  isEQEnabled: boolean;
+  setIsEQEnabled: (isEQEnabled: boolean) => void;
+  downloadAudio: () => void;
 }
 
 const AudioContext = createContext<AudioContextType | null>(null);
@@ -24,19 +28,35 @@ export const AudioContextProvider = ({
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isOriginalAudio, setIsOriginalAudio] = useState<boolean>(true);
-
-  console.log(originalAudioUrl);
-
-  useEffect(() => {
-    if (isOriginalAudio) {
-      setCurrentAudioUrl(originalAudioUrl);
-    } else {
-      setCurrentAudioUrl(processedAudioUrl);
-    }
-  }, [isOriginalAudio, originalAudioUrl, processedAudioUrl]);
+  const [isEQEnabled, setIsEQEnabled] = useState<boolean>(true);
 
   const togglePlayPause = () => {
     setIsPlaying((prev) => !prev);
+  };
+
+  const downloadAudio = async () => {
+    if (!currentAudioUrl) {
+      toast.error("No audio available to download.");
+      return;
+    }
+
+    try {
+      const response = await fetch(currentAudioUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.setAttribute("download", "enhanced-audio.wav");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      toast.error("Failed to download audio.");
+      console.error("Download error:", error);
+    }
   };
 
   return (
@@ -52,6 +72,9 @@ export const AudioContextProvider = ({
         togglePlayPause,
         isOriginalAudio,
         setIsOriginalAudio,
+        isEQEnabled,
+        setIsEQEnabled,
+        downloadAudio,
       }}
     >
       {children}

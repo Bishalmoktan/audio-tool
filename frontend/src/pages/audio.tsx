@@ -19,10 +19,14 @@ const animationVariants = {
 
 const AudioPage = () => {
   const navigate = useNavigate();
-  const { currentAudioUrl, isOriginalAudio, setIsOriginalAudio } =
-    useAudioContext();
-
-  console.log(currentAudioUrl);
+  const {
+    currentAudioUrl,
+    isOriginalAudio,
+    setIsOriginalAudio,
+    setCurrentAudioUrl,
+    originalAudioUrl,
+    processedAudioUrl,
+  } = useAudioContext();
 
   useEffect(() => {
     if (!currentAudioUrl) {
@@ -75,7 +79,10 @@ const AudioPage = () => {
         <div className="flex gap-2">
           <div className="flex gap-2 bg-black/50 rounded-full p-2 items-center z-10 cursor-pointer">
             <span
-              onClick={() => setIsOriginalAudio(true)}
+              onClick={() => {
+                setCurrentAudioUrl(originalAudioUrl);
+                setIsOriginalAudio(true);
+              }}
               className={`rounded-full px-2 py-1 ${
                 isOriginalAudio
                   ? "bg-white text-black"
@@ -85,7 +92,10 @@ const AudioPage = () => {
               Original
             </span>
             <span
-              onClick={() => setIsOriginalAudio(false)}
+              onClick={() => {
+                setCurrentAudioUrl(processedAudioUrl);
+                setIsOriginalAudio(false);
+              }}
               className={`rounded-full px-2 py-1 ${
                 !isOriginalAudio
                   ? "bg-white text-black"
@@ -111,7 +121,7 @@ const AudioPage = () => {
         variants={animationVariants}
         className="w-full z-[999999]"
       >
-        <MusicPlayer />
+        <MusicPlayer key={"audio"} />
       </motion.div>
 
       <BackgroundBeams />

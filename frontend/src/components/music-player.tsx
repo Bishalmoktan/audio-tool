@@ -3,6 +3,7 @@ import { Pause, Play, Volume2 } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { Slider } from "./ui/slider";
 import { useAudioContext } from "@/context/audio-context";
+
 export default function MusicPlayer() {
   const wavesurferRef = useRef<HTMLDivElement | null>(null);
   const [volume, setVolume] = useState(1);

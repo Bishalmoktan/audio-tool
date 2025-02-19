@@ -21,7 +21,12 @@ const animationVariants = {
 
 const UploadTrack = () => {
   const navigate = useNavigate();
-  const { setOriginalAudioUrl, setProcessedAudioUrl } = useAudioContext();
+  const {
+    setOriginalAudioUrl,
+    setProcessedAudioUrl,
+    setCurrentAudioUrl,
+    setIsOriginalAudio,
+  } = useAudioContext();
   const dropzone = useDropzone({
     onDropFile: async (file: File) => {
       setOriginalAudioUrl(URL.createObjectURL(file));
@@ -29,11 +34,11 @@ const UploadTrack = () => {
       toast.promise(processSong(file), {
         loading: "Uploading...",
         success: (response) => {
+          const masteredAudioUrl = `${env.pythonServerUrl}${response.data.processed_file}`;
+          setProcessedAudioUrl(masteredAudioUrl);
+          setCurrentAudioUrl(masteredAudioUrl);
+          setIsOriginalAudio(false);
           navigate("/audio");
-          setProcessedAudioUrl(
-            `${env.pythonServerUrl}${response.data.processed_file}`
-          );
-
           return "Song processed successfully!";
         },
         error: "Failed to process song!",

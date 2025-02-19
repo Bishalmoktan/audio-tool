@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 
+import { PYTHON_SERVICE_URL } from "../config/env";
+
 export const enhance = async (req: Request, res: Response) => {
     if(!req.file) {
         res.status(400).json({ success: false, error: "No file uploaded" });
@@ -24,11 +26,14 @@ export const enhance = async (req: Request, res: Response) => {
 
     
     
-        const response = await axios.post(`http://localhost:8000/process`, {
+        const response = await axios.post(`${PYTHON_SERVICE_URL}/process`, {
             songUrl: filePath,
         });
 
-    fs.unlinkSync(filePath);
+        fs.unlinkSync(filePath);
+
+
+        console.log(response)
 
     
         res.json({
@@ -38,8 +43,8 @@ export const enhance = async (req: Request, res: Response) => {
         });
     
       } catch (error) {
-        console.error('Error extracting text from PDF:', error);
-        res.status(500).json({ error: 'Failed to extract text from PDF' });
+        console.error('Error processing the audio:', error);
+        res.status(500).json({ error: 'Failed to process audio' });
       }
 
 };

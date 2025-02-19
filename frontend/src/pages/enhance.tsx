@@ -24,52 +24,26 @@ const EnhancePage = () => {
   const weq8UIRef = useRef<HTMLElement | null>(null);
 
   const navigate = useNavigate();
-  const { currentAudioUrl, isPlaying } = useAudioContext();
+  const { currentAudioUrl, isPlaying, isEQEnabled, setIsEQEnabled } =
+    useAudioContext();
 
   useEffect(() => {
     if (!currentAudioUrl) {
       toast.warning("Please upload an audio file first");
       navigate("/");
     }
-
-    const initializeAudio = async () => {
-      if (!audioElementRef.current) {
-        audioElementRef.current = new Audio(currentAudioUrl);
-        audioElementRef.current.loop = true;
-      }
-
-      if (isPlaying) {
-        await audioElementRef.current.play();
-      } else {
-        audioElementRef.current.pause();
-      }
-    };
-    initializeAudio();
-  }, [currentAudioUrl, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
-    const manageAudioPlayback = async () => {
-      if (!audioElementRef.current || !audioContextRef.current) return;
+    if (!currentAudioUrl) {
+      toast.warning("Please upload an audio file first");
+      navigate("/");
+      return;
+    }
 
-      if (isPlaying) {
-        await audioContextRef.current.resume();
-        await audioElementRef.current.play();
-      } else {
-        await audioElementRef.current.pause();
-        await audioContextRef.current.suspend();
-      }
-    };
-
-    manageAudioPlayback();
-  }, [isPlaying]);
-
-  useEffect(() => {
     const initializeAudio = async () => {
       try {
-        if (!window.AudioContext) {
-          console.error("Web Audio API is not supported in this browser.");
-          return;
-        }
+        if (!window.AudioContext) return;
 
         if (!audioContextRef.current) {
           audioContextRef.current = new AudioContext();
@@ -80,8 +54,9 @@ const EnhancePage = () => {
         }
 
         if (!audioElementRef.current) {
-          audioElementRef.current = new Audio();
-          audioElementRef.current.src = currentAudioUrl;
+          audioElementRef.current = new Audio(currentAudioUrl);
+          audioElementRef.current.crossOrigin = "anonymous";
+          audioElementRef.current.loop = true;
         }
 
         if (!audioSourceRef.current) {
@@ -96,28 +71,38 @@ const EnhancePage = () => {
           weq8Ref.current.connect(audioContextRef.current.destination);
         }
 
-        console.log("AudioContext initialized:", audioContextRef.current);
-
         if (weq8UIRef.current) {
           // @ts-ignore
           weq8UIRef.current.runtime = weq8Ref.current;
         }
 
-        const handleUserInteraction = () => {
-          audioContextRef.current?.resume();
-          audioElementRef.current
-            ?.play()
-            .catch((err) => console.error("Error playing audio:", err));
-          document.removeEventListener("click", handleUserInteraction);
-        };
-        document.addEventListener("click", handleUserInteraction);
+        if (isPlaying) {
+          await audioElementRef.current.play();
+        } else {
+          audioElementRef.current.pause();
+        }
       } catch (error) {
         console.error("Error initializing audio:", error);
       }
     };
 
     initializeAudio();
-  }, [currentAudioUrl]);
+  }, [currentAudioUrl, navigate, isPlaying]);
+
+  const handleEnableEQ = async () => {
+    if (audioContextRef.current && audioElementRef.current) {
+      audioElementRef.current.currentTime = audioContextRef.current.currentTime;
+    }
+    await audioContextRef.current?.resume();
+    audioElementRef.current?.play();
+    setIsEQEnabled(true);
+  };
+
+  const handleDisableEQ = async () => {
+    await audioContextRef.current?.suspend();
+    audioElementRef.current?.pause();
+    setIsEQEnabled(false);
+  };
 
   return (
     <motion.div
@@ -141,15 +126,31 @@ const EnhancePage = () => {
           achieve perfect sound.
         </p>
         <div className="flex gap-2">
-          <div className="flex gap-2 bg-black/50 rounded-full p-2 items-center">
-            <span className="text-black bg-white rounded-full px-2 py-1">
+          <div className="flex gap-2 bg-black/50 rounded-full p-2 items-center z-10 cursor-pointer">
+            <span
+              onClick={handleEnableEQ}
+              className={`rounded-full px-2 py-1 ${
+                isEQEnabled
+                  ? "bg-white text-black"
+                  : "bg-black text-muted-foreground"
+              }`}
+            >
               Enable EQ
             </span>
-            <span className="text-muted-foreground">Disable EQ</span>
+            <span
+              onClick={handleDisableEQ}
+              className={`rounded-full px-2 py-1 ${
+                !isEQEnabled
+                  ? "bg-white text-black"
+                  : "bg-black text-muted-foreground"
+              }`}
+            >
+              Disable EQ
+            </span>
           </div>
           <Link
             to={"/audio"}
-            className="flex justify-center items-center bg-black/50 rounded-full p-2"
+            className="flex justify-center items-center bg-black/50 rounded-full p-2 z-10"
           >
             <Music className="size-7" />
           </Link>
@@ -174,7 +175,7 @@ const EnhancePage = () => {
         variants={animationVariants}
         className="w-full z-[999999]"
       >
-        <MusicPlayer />
+        <MusicPlayer key={"enhance"} />
       </motion.div>
 
       <BackgroundBeams />
